@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
 
-CMD ["python", "word_count_client.py"]
+CMD ["python", "word_count_client.py", "keyword", "filename"]
