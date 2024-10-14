@@ -25,6 +25,36 @@ def get_word_count(conn, filename, keyword):
         print(f"An error occurred: {e}")
     return 0, 0, 0
 
+def plot_metrics(latencies):
+
+    x_labels = [pair[0] for pair in latencies]
+    normal_latencies = [pair[1] for pair in latencies]
+    cache_latencies = [pair[2] for pair in latencies]
+    
+    x = np.arange(len(x_labels))  # the label locations
+    width = 0.35  # the width of the bars
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Bar chart for normal and cache latencies
+    bars1 = ax.bar(x - width/2, normal_latencies, width, label='Normal Latency')
+    bars2 = ax.bar(x + width/2, cache_latencies, width, label='Cache Latency')
+
+    # Add labels, title, and custom x-axis tick labels
+    ax.set_xlabel("Keyword-Filename Pair")
+    ax.set_ylabel("Latency (seconds)")
+    ax.set_title("Normal Latency vs Cache Latency for Keyword-Filename Pairs")
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_labels, rotation=45)
+    ax.legend()
+
+    # Ensure layout is tight to avoid overlap
+    plt.tight_layout()
+
+    # Save the plot as a PNG image
+    plt.savefig("/output/latency_plot.png")
+    print("Plot saved as /output/latency_plot.png")
+
 if __name__ == "__main__":
     # Connect to the server
     conn = rpyc.connect("wordcount_server_1", 18812)
@@ -57,31 +87,4 @@ if __name__ == "__main__":
         # Clear the cache for this batch
         conn.root.clear_cache()
     
-    # Plotting the results as bar plot
-    x_labels = [pair[0] for pair in latencies]
-    normal_latencies = [pair[1] for pair in latencies]
-    cache_latencies = [pair[2] for pair in latencies]
-    
-    x = np.arange(len(x_labels))  # the label locations
-    width = 0.35  # the width of the bars
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Bar chart for normal and cache latencies
-    bars1 = ax.bar(x - width/2, normal_latencies, width, label='Normal Latency')
-    bars2 = ax.bar(x + width/2, cache_latencies, width, label='Cache Latency')
-
-    # Add labels, title, and custom x-axis tick labels
-    ax.set_xlabel("Keyword-Filename Pair")
-    ax.set_ylabel("Latency (seconds)")
-    ax.set_title("Normal Latency vs Cache Latency for Keyword-Filename Pairs")
-    ax.set_xticks(x)
-    ax.set_xticklabels(x_labels, rotation=45)
-    ax.legend()
-
-    # Ensure layout is tight to avoid overlap
-    plt.tight_layout()
-
-    # Save the plot as a PNG image
-    plt.savefig("/output/latency_plot.png")
-    print("Plot saved as /output/latency_plot.png")
+    plot_metrics(latencies)
