@@ -28,9 +28,13 @@ class WordCountService(rpyc.Service):
         
         return count
 
+    def exposed_clear_cache(self):
+        # Clear the entire Redis cache
+        redis_client.flushdb()
+        print("Cache cleared after batch request")
+
 if __name__ == "__main__":
     from rpyc.utils.server import ThreadedServer
     server = ThreadedServer(WordCountService, port=18812, hostname='0.0.0.0')
     print("Server started on port 18812")
     server.start()
-

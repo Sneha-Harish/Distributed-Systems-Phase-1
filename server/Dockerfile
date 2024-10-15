@@ -8,6 +8,7 @@ COPY . /server
 RUN pip install --no-cache-dir -r requirements.txt
 
 
+
 # COPY text1.txt /server
 # COPY text2.txt /server
 
