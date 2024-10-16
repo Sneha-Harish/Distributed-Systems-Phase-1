@@ -6,6 +6,14 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+def serve_warmup(conn):
+    """
+    Perform a dummy warm-up call to the server to reduce the delay in the first actual request.
+    """
+    print("Performing warm-up request...")
+    conn.root.exposed_word_count("dummyfile", "dummykeyword")
+    print("Warm-up request completed.\n")
+
 def get_word_count(conn, filename, keyword):
     try:
         # First request: measure latency
@@ -52,7 +60,7 @@ def plot_metrics(latencies):
         height = bar.get_height()
         ax.annotate(f'{height:.2f}',
                     xy=(bar.get_x() + bar.get_width() / 2, height),
-                    xytext=(0, 3),  # 3 points vertical offset
+                    xytext=(0, 3),
                     textcoords="offset points",
                     ha='center', va='bottom')
 
@@ -73,7 +81,7 @@ def plot_count(counts):
     x_labels = [pair[0] for pair in counts]
     count_values = [pair[1] for pair in counts]
     
-    x = np.arange(len(x_labels))  # the label locations
+    x = np.arange(len(x_labels))
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -101,31 +109,38 @@ def plot_count(counts):
 if __name__ == "__main__":
     conn = rpyc.connect("wordcount_server_1", 18812)
     print("Connection successful!")
-    
-    num_pairs = int(input("Enter the number of keyword-filename pairs: "))
-    
-    keyword_filename_pairs = []
 
-    for _ in range(num_pairs):
-        keyword = input("Enter the keyword: ")
-        filename = input("Enter the filename: ")
-        keyword_filename_pairs.append((filename, keyword))
-    
-    latencies = []
-    counts = []
-    
-    for filename, keyword in keyword_filename_pairs:
-        word_count, latency, cache_latency = get_word_count(conn, filename, keyword)
-        
-        print(f"The keyword '{keyword}' appears {word_count} times in {filename}.")
-        print(f"First request latency: {latency:.4f} ms")  # Show more decimal places for accuracy
-        print(f"Cache hit latency: {cache_latency:.4f} ms")
-        
-        latencies.append((f"{keyword}-{filename}", latency, cache_latency))
-        counts.append((f"{keyword}-{filename}", word_count))
-        
-        conn.root.clear_cache()
-    
-    plot_metrics(latencies)
-    
-    plot_count(counts)
+    # Perform the warm-up request
+    serve_warmup(conn)
+
+    try:
+        while True:
+            num_pairs = int(input("Enter the number of keyword-filename pairs (or Ctrl+C to exit): "))
+            
+            keyword_filename_pairs = []
+
+            for _ in range(num_pairs):
+                keyword = input("Enter the keyword: ")
+                filename = input("Enter the filename: ")
+                keyword_filename_pairs.append((filename, keyword))
+            
+            latencies = []
+            counts = []
+            
+            for filename, keyword in keyword_filename_pairs:
+                word_count, latency, cache_latency = get_word_count(conn, filename, keyword)
+                
+                print(f"The keyword '{keyword}' appears {word_count} times in {filename}.")
+                print(f"First request latency: {latency:.4f} ms")
+                print(f"Cache hit latency: {cache_latency:.4f} ms")
+                
+                latencies.append((f"{keyword}-{filename}", latency, cache_latency))
+                counts.append((f"{keyword}-{filename}", word_count))
+                
+                conn.root.clear_cache()
+
+            plot_metrics(latencies)
+            plot_count(counts)
+
+    except KeyboardInterrupt:
+        print("\nBye!")
