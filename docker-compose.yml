@@ -4,7 +4,6 @@ services:
     ports:
       - "6379:6379"
 
-  # Server 1
   wordcount_server_1:
     build: ./server
     environment:
